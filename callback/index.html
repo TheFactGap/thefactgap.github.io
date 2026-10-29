@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Finish sign-in · The Fact Gap</title>
+<link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/icon.svg" alt="">The Fact Gap</a>
+  </div>
+</header>
+
+<main class="prose doc">
+  <h1 id="title">Finish sign-in</h1>
+  <p id="intro">This page passes a sign-in code back to The Fact Gap Publisher running on our own computer. It stores nothing and sends nothing anywhere else.</p>
+
+  <div id="ok" hidden>
+    <p>Sign-in worked. Click the button to hand the code to the Publisher. If the button doesn't work, copy the code and paste it where the Publisher asks for it.</p>
+    <div class="code-box">
+      <code id="code"></code>
+      <button class="button secondary" id="copy" type="button">Copy code</button>
+    </div>
+    <p><a class="button" id="finish" href="http://127.0.0.1:8765/callback">Finish sign-in</a></p>
+    <p class="meta" id="copied" role="status"></p>
+  </div>
+
+  <div id="failed" class="note" hidden>
+    <p><strong>Sign-in didn't finish.</strong> <span id="reason"></span></p>
+    <p>Close this tab and start the sign-in again from the Publisher.</p>
+  </div>
+
+  <div id="empty" class="note" hidden>
+    <p>There is no sign-in code on this page. It only works when a platform sends you here during sign-in.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var code = params.get('code') || params.get('auth_code');
+  var error = params.get('error') || params.get('error_code');
+  var show = function (id) { document.getElementById(id).hidden = false; };
+
+  if (error) {
+    var detail = params.get('error_description') || params.get('error_reason') || error;
+    document.getElementById('reason').textContent = 'The platform said: ' + detail;
+    show('failed');
+    return;
+  }
+  if (!code) { show('empty'); return; }
+
+  document.getElementById('code').textContent = code;
+  // Only ever forwards to the Publisher on this same computer.
+  document.getElementById('finish').href = 'http://127.0.0.1:8765/callback' + window.location.search;
+  show('ok');
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var status = document.getElementById('copied');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(function () { status.textContent = 'Copied.'; },
+        function () { status.textContent = 'Copy failed: select the code and copy it by hand.'; });
+    } else {
+      status.textContent = 'Select the code and copy it by hand.';
+    }
+  });
+})();
+</script>
+</body>
+</html>
